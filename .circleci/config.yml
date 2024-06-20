@@ -1,31 +1,42 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine.
-# See: https://circleci.com/docs/configuration-reference
 version: 2.1
+orbs:
+  aws-cli: circleci/aws-cli@4.0
+  aws-ecr: circleci/aws-ecr@9.0
+  aws-ecs: circleci/aws-ecs@4.0
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/jobs-steps/#jobs-overview & https://circleci.com/docs/configuration-reference/#jobs
-jobs:
-  say-hello:
-    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/executor-intro/ & https://circleci.com/docs/configuration-reference/#executor-job
-    docker:
-      # Specify the version you desire here
-      # See: https://circleci.com/developer/images/image/cimg/base
-      - image: cimg/base:current
-
-    # Add steps to the job
-    # See: https://circleci.com/docs/jobs-steps/#steps-overview & https://circleci.com/docs/configuration-reference/#steps
-    steps:
-      # Checkout the code as the first step.
-      - checkout
-      - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
-
-# Orchestrate jobs using workflows
-# See: https://circleci.com/docs/workflows/ & https://circleci.com/docs/configuration-reference/#workflows
 workflows:
-  say-hello-workflow: # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run.
+  build-and-deploy:
     jobs:
-      - say-hello
+      - aws-ecr/build-and-push-image:
+          auth:
+            - aws-cli/setup:
+                profile: OIDC_USER
+                role_arn: arn:aws:iam::538253826620:role/video-tagger-circleci-pusher
+          profile: OIDC_USER
+          region: ap-southeast-2
+          registry_id: d4n8a6t5
+          repo: public.ecr.aws/d4n8a6t5/video-tagger-api
+          tag: ${CIRCLE_SHA1}
+          steps:
+            - checkout
+            - run:
+                name: Write ENV VAR to file
+                command: echo $GCP_KEY > /app/key.json
+            - setup_remote_docker
+            - run:
+                name: Build Docker image
+                command: docker build -t ${MY_APP_PREFIX}:${CIRCLE_SHA1} .
+            - aws-ecr/push-image:
+                repo: public.ecr.aws/d4n8a6t5/video-tagger-api
+                tag: ${CIRCLE_SHA1}
+      - aws-ecs/deploy_service_update:
+          auth:
+            - aws-cli/setup:
+                profile: OIDC-USER
+                role_arn: arn:aws:iam::538253826620:role/video-tagger-circleci-pusher
+          cluster: video-tagger
+          container_image_name_updates: container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}
+          family: ${MY_APP_PREFIX}-service
+          profile: OIDC-USER
+          requires:
+            - aws-ecr/build-and-push-image
