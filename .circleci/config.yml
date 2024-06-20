@@ -7,26 +7,7 @@ orbs:
 workflows:
   build-and-deploy:
     jobs:
-      - aws-ecr/build_and_push_image:
-          auth:
-            - aws-cli/setup:
-                role_arn: arn:aws:iam::538253826620:role/video-tagger-circleci-pusher
-          region: ap-southeast-2
-          registry_id: d4n8a6t5
-          repo: public.ecr.aws/d4n8a6t5/video-tagger-api
-          tag: ${CIRCLE_SHA1}
-          steps:
-            - checkout
-            - run:
-                name: Write ENV VAR to file
-                command: echo $GCP_KEY > /app/key.json
-            - setup_remote_docker
-            - run:
-                name: Build Docker image
-                command: docker build -t ${MY_APP_PREFIX}:${CIRCLE_SHA1} .
-            - aws-ecr/push_image:
-                repo: public.ecr.aws/d4n8a6t5/video-tagger-api
-                tag: ${CIRCLE_SHA1}
+      - build-and-push-image
       - aws-ecs/deploy_service_update:
           auth:
             - aws-cli/setup:
@@ -35,4 +16,31 @@ workflows:
           container_image_name_updates: container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}
           family: ${MY_APP_PREFIX}-service
           requires:
-            - aws-ecr/build-and-push-image
+            - build-and-push-image
+
+jobs:
+  build-and-push-image:
+    docker:
+      - image: circleci/python:3.8  # or any Docker image that suits your needs
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.7
+      - run:
+          name: Write ENV VAR to file
+          command: echo $GCP_KEY > /app/key.json
+      - run:
+          name: Build Docker image
+          command: docker build -t ${MY_APP_PREFIX}:${CIRCLE_SHA1} .
+      - aws-cli/setup:
+          role_arn: arn:aws:iam::538253826620:role/video-tagger-circleci-pusher
+      - run:
+          name: Login to ECR
+          command: |
+            aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin public.ecr.aws/d4n8a6t5
+      - run:
+          name: Tag Docker image
+          command: docker tag ${MY_APP_PREFIX}:${CIRCLE_SHA1} public.ecr.aws/d4n8a6t5/video-tagger-api:${CIRCLE_SHA1}
+      - run:
+          name: Push Docker image to ECR
+          command: docker push public.ecr.aws/d4n8a6t5/video-tagger-api:${CIRCLE_SHA1}
