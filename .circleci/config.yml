@@ -11,7 +11,7 @@ workflows:
           auth:
             - aws-cli/setup:
                 profile_name: OIDC-USER
-                role_arn: arn:aws:iam::538253826620:role/video-tagger-circleci-pusher
+                role_arn: arn:aws:iam::538253826620:role/video-tagger-api-pusher
           region: ap-southeast-2
 
           repo: public.ecr.aws/d4n8a6t5/video-tagger-api
@@ -20,7 +20,7 @@ workflows:
           auth:
             - aws-cli/setup:
                 profile_name: OIDC-USER
-                role_arn: arn:aws:iam::538253826620:role/video-tagger-circleci-pusher
+                role_arn: arn:aws:iam::538253826620:role/video-tagger-api-pusher
           cluster: video-tagger
           container_image_name_updates: container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}
           family: ${MY_APP_PREFIX}-service
