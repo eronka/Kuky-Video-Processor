@@ -10,6 +10,7 @@ COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN touch /app/key.json && echo $GCP_KEY > /app/key.json
 
 EXPOSE 8000
 
