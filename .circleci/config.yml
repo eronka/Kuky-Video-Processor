@@ -7,7 +7,7 @@ orbs:
 workflows:
   build-and-deploy:
     jobs:
-      - aws-ecr/build-and-push-image:
+      - aws-ecr/build_and_push_image:
           auth:
             - aws-cli/setup:
                 profile: OIDC_USER
@@ -26,7 +26,7 @@ workflows:
             - run:
                 name: Build Docker image
                 command: docker build -t ${MY_APP_PREFIX}:${CIRCLE_SHA1} .
-            - aws-ecr/push-image:
+            - aws-ecr/push_image:
                 repo: public.ecr.aws/d4n8a6t5/video-tagger-api
                 tag: ${CIRCLE_SHA1}
       - aws-ecs/deploy_service_update:
