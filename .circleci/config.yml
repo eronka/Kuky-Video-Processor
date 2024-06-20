@@ -13,7 +13,7 @@ workflows:
                 profile_name: OIDC-USER
                 role_arn: arn:aws:iam::538253826620:role/video-tagger-api-pusher
           region: ap-southeast-2
-
+          profile_name: OIDC-USER
           repo: public.ecr.aws/d4n8a6t5/video-tagger-api
           tag: ${CIRCLE_SHA1}
       - aws-ecs/deploy_service_update:
@@ -24,5 +24,7 @@ workflows:
           cluster: video-tagger
           container_image_name_updates: container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}
           family: ${MY_APP_PREFIX}-service
+          profile_name: OIDC-USER
+
           requires:
             - aws-ecr/build_and_push_image
