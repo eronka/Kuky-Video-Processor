@@ -35,9 +35,7 @@ env:
   ECR_REPOSITORY: public.ecr.aws/d4n8a6t5/video-tagger-api           # set this to your Amazon ECR repository name
   ECS_SERVICE: video-tagger-api                 # set this to your Amazon ECS service name
   ECS_CLUSTER: video-tagger                 # set this to your Amazon ECS cluster name
-                                               # file, e.g. .aws/task-definition.json
   CONTAINER_NAME: video-tagger-api           # set this to the name of the container in the
-                                               # containerDefinitions section of your task definition
 
 permissions:
   contents: read
@@ -72,9 +70,9 @@ jobs:
         # Build a docker container and
         # push it to ECR so that it can
         # be deployed to ECS.
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --build-arg="GCP_KEY=${{secrets.GCP_KEY}}" .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        docker build -t $ECR_REPOSITORY:latest --build-arg="GCP_KEY=${{secrets.GCP_KEY}}" .
+        docker push $ECR_REPOSITORY:latest
+        echo "image=$ECR_REPOSITORY:latest" >> $GITHUB_OUTPUT
 
     - name: Force deployment
       run: |
