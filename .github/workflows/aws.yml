@@ -55,7 +55,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+        aws-region: us-east-1
 
     - name: Login to Amazon ECR
       id: login-ecr
@@ -79,4 +79,4 @@ jobs:
 
     - name: Force deployment
       run: |
-        aws ecs update-service --cluster ${{env.ECS_CLUSTER}} --service ${{env.ECS_SERVICE}} --force-new-deployment
+        aws ecs update-service --region ap-southeast-2 --cluster ${{env.ECS_CLUSTER}} --service ${{env.ECS_SERVICE}} --force-new-deployment
