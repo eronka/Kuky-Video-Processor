@@ -84,6 +84,7 @@ def transcribe_audio_openai_chunked(audio_path: str):
             with open(chunk_path, 'rb') as f:
                 response = client.audio.transcriptions.create(
                     model="whisper-1",
+                    language='en',
                     file=f
                 )
                 transcripts.append(response.text)
